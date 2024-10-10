@@ -5,17 +5,17 @@
 
 
 // Add default functionality here for any IITeleportPortalCharacter functions that are not pure virtual.
-UCameraComponent* ITeleportPortalCharacterInterface::GetCameraComponent_Implementation()
+UCameraComponent* ITeleportPortalActorInterface::GetCameraComponent_Implementation()
 {
 	return nullptr;
 }
 
-ACharacter* ITeleportPortalCharacterInterface::GetCharacter_Implementation()
+ACharacter* ITeleportPortalActorInterface::GetCharacter_Implementation()
 {
 	return nullptr;
 }
 
-APlayerController* ITeleportPortalCharacterInterface::GetPlayerController_Implementation()
+APlayerController* ITeleportPortalActorInterface::GetPlayerController_Implementation()
 {
 	return nullptr;
 }

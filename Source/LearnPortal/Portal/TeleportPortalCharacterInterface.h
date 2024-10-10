@@ -9,7 +9,7 @@
 class UCameraComponent;
 // This class does not need to be modified.
 UINTERFACE()
-class UTeleportPortalCharacterInterface : public UInterface
+class UTeleportPortalActorInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,7 +17,7 @@ class UTeleportPortalCharacterInterface : public UInterface
 /**
  * 
  */
-class LEARNPORTAL_API ITeleportPortalCharacterInterface
+class LEARNPORTAL_API ITeleportPortalActorInterface
 {
 	GENERATED_BODY()
 

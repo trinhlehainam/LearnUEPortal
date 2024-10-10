@@ -27,10 +27,13 @@ ATeleportPortal::ATeleportPortal()
 	// Create Mesh Plane and Bounding Box
 	PortalMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PortalMesh"));
 	PortalMesh->SetupAttachment(RootComponent);
+	PortalMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 	PortalMesh->Mobility = EComponentMobility::Static;
 
 	ActorDetectionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("ActorDetectionBox"));
 	ActorDetectionBox->SetupAttachment(PortalMesh);
+	ActorDetectionBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
+	ActorDetectionBox->SetCollisionResponseToAllChannels(ECR_Overlap);
 	ActorDetectionBox->Mobility = EComponentMobility::Static;
 	//
 }
@@ -84,15 +87,28 @@ void ATeleportPortal::BeginPlay()
 	ControllerOwner = Cast<APlayerController>(
 		UGameplayStatics::GetPlayerController(this, 0));
 
-	if (ACharacter* Character = Cast<ACharacter>(ControllerOwner->GetCharacter()); Character != nullptr)
+	if (AActor* Character = ControllerOwner->GetCharacter(); Character != nullptr)
 	{
-		TeleportPortalCharacterInterface = Cast<ITeleportPortalCharacterInterface>(Character);
-		if (TeleportPortalCharacterInterface != nullptr)
-		{
-			TeleportCharacter = Character;
-		}
+		TeleportableActor = Character;
+	}
+	else if (AActor* Pawn = ControllerOwner->GetPawn(); Pawn != nullptr)
+	{
+		TeleportableActor = Pawn;
 	}
 
+	if (TeleportableActor != nullptr)
+	{
+		if (ITeleportPortalActorInterface* Interface = Cast<ITeleportPortalActorInterface>(TeleportableActor);
+			Interface != nullptr)
+		{
+			TeleportActorInterface = Interface;
+		}
+		else
+		{
+			TeleportableActor = nullptr;
+		}
+	}
+	
 	if (bEnableCapture)
 	{
 		InitSceneCapture();
@@ -159,16 +175,13 @@ void ATeleportPortal::GeneratePortalTexture()
 
 void ATeleportPortal::UpdateRenderTarget()
 {
-	if (ControllerOwner == nullptr || TeleportPortalCharacterInterface == nullptr)
+	if (ControllerOwner == nullptr || TeleportActorInterface == nullptr || TeleportableActor == nullptr)
 	{
 		return;
 	}
-	if (TeleportCharacter == nullptr)
-	{
-		return;
-	}
+	
 	const FVector PortalLocation = GetActorLocation();
-	const FVector PlayerLocation = TeleportCharacter->GetActorLocation();
+	const FVector PlayerLocation = TeleportableActor->GetActorLocation();
 
 	// UE_LOG(LogTemp, Warning, TEXT("Distance is %.2f"), Distance);
 	if (const float Distance = FMath::Abs(FVector::Dist(PlayerLocation, PortalLocation));
@@ -198,7 +211,8 @@ void ATeleportPortal::UpdateCapture()
 	}
 	
 	if (SceneCapture == nullptr || PortalTexture == nullptr 
-		|| TeleportPortalCharacterInterface == nullptr || bIsActive == false)
+		|| TeleportActorInterface == nullptr || TeleportableActor == nullptr
+		|| bIsActive == false)
 	{
 		return;
 	}
@@ -206,7 +220,7 @@ void ATeleportPortal::UpdateCapture()
 	// Place the SceneCapture to the linkedportal
 	if (ATeleportPortal* Target = GetLinkedPortal(); Target != nullptr)
 	{
-		const UCameraComponent* PlayerCamera = TeleportPortalCharacterInterface->Execute_GetCameraComponent(TeleportCharacter);
+		const UCameraComponent* PlayerCamera = TeleportActorInterface->Execute_GetCameraComponent(TeleportableActor);
 		if (PlayerCamera == nullptr)
 		{
 			return;
@@ -233,17 +247,12 @@ void ATeleportPortal::UpdateCapture()
 
 void ATeleportPortal::UpdateTeleport()
 {
-	if (ControllerOwner == nullptr || TeleportPortalCharacterInterface == nullptr)
+	if (ControllerOwner == nullptr || TeleportActorInterface == nullptr || TeleportableActor == nullptr)
 	{
 		return;
 	}
 
-	if (TeleportCharacter == nullptr)
-	{
-		return;
-	}
-
-	const UCameraComponent* PlayerCamera = TeleportPortalCharacterInterface->Execute_GetCameraComponent(TeleportCharacter);
+	const UCameraComponent* PlayerCamera = TeleportActorInterface->Execute_GetCameraComponent(TeleportableActor);
 	if (PlayerCamera == nullptr)
 	{
 		return;
@@ -262,7 +271,7 @@ void ATeleportPortal::UpdateTeleport()
 		return;
 	}
 
-	RequestTeleportByPortal(TeleportCharacter);
+	RequestTeleportByPortal(TeleportableActor);
 }
 
 void ATeleportPortal::RequestTeleportByPortal(AActor* TargetToTeleport)
@@ -379,11 +388,6 @@ void ATeleportPortal::TeleportActor(AActor* ActorToTeleport)
 	// 	return;
 	// }
 
-	// if (ControllerOwner != nullptr)
-	// {
-	// 	ControllerOwner->GetLocalPlayer()->PerformCameraCut();
-	// }
-
 	FVector SavedVelocity = FVector::ZeroVector;
 	SavedVelocity = ActorToTeleport->GetVelocity();
 
@@ -405,24 +409,25 @@ void ATeleportPortal::TeleportActor(AActor* ActorToTeleport)
 	);
 	ActorToTeleport->SetActorRotation(NewRotation);
 
-	if (ITeleportPortalCharacterInterface* Interface = Cast<ITeleportPortalCharacterInterface>(ActorToTeleport);
+	if (ITeleportPortalActorInterface* Interface = Cast<ITeleportPortalActorInterface>(ActorToTeleport);
 		Interface != nullptr)
 	{
-		ACharacter* Character = Interface->Execute_GetCharacter(ActorToTeleport);
-		if (
-			APlayerController* PortalPlayerController = Interface->Execute_GetPlayerController(ActorToTeleport);
-			PortalPlayerController != nullptr
-		)
+		if (ACharacter* Character = Interface->Execute_GetCharacter(ActorToTeleport);
+			Character != nullptr)
 		{
-			NewRotation = FUTool::ConvertRotationToActorSpace(
-				PortalPlayerController->GetControlRotation(),
-				this,
-				LinkedPortal
-			);
-			PortalPlayerController->SetControlRotation(NewRotation);
+			if (APlayerController* PortalPlayerController = Interface->Execute_GetPlayerController(ActorToTeleport);
+				PortalPlayerController != nullptr)
+			{
+				NewRotation = FUTool::ConvertRotationToActorSpace(
+					PortalPlayerController->GetControlRotation(),
+					this,
+					LinkedPortal
+				);
+				PortalPlayerController->SetControlRotation(NewRotation);
+			}
+			FVector NewVelocity = FUTool::ConvertVelocityToActorSpace(SavedVelocity, this, LinkedPortal);
+			Character->GetCharacterMovement()->Velocity = NewVelocity;
 		}
-		FVector NewVelocity = FUTool::ConvertVelocityToActorSpace(SavedVelocity, this, LinkedPortal);
-		Character->GetCharacterMovement()->Velocity = NewVelocity;
 	}
 
 	LastPosition = NewLocation;

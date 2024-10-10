@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TeleportPortal.generated.h"
 
-class ITeleportPortalCharacterInterface;
+class ITeleportPortalActorInterface;
 class UBoxComponent;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
@@ -93,7 +93,7 @@ private:
 	APlayerController* ControllerOwner;
 
 	UPROPERTY()
-	ACharacter* TeleportCharacter;
+	AActor* TeleportableActor;
 
 	bool bIsActive{false};
 	bool bLastInFront{false};
@@ -101,7 +101,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool bEnableCapture{false};
 
-	ITeleportPortalCharacterInterface* TeleportPortalCharacterInterface;
+	ITeleportPortalActorInterface* TeleportActorInterface;
 
 	UPROPERTY(EditAnywhere)
 	ATeleportPortal* LinkedPortal;
