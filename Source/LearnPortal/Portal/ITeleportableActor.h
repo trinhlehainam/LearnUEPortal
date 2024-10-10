@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "TeleportPortalCharacterInterface.generated.h"
+#include "ITeleportableActor.generated.h"
 
 class UCameraComponent;
 // This class does not need to be modified.
 UINTERFACE()
-class UTeleportPortalActorInterface : public UInterface
+class UTeleportableActor : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,7 +17,7 @@ class UTeleportPortalActorInterface : public UInterface
 /**
  * 
  */
-class LEARNPORTAL_API ITeleportPortalActorInterface
+class LEARNPORTAL_API ITeleportableActor
 {
 	GENERATED_BODY()
 

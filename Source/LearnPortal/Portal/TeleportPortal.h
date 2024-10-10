@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TeleportPortal.generated.h"
 
-class ITeleportPortalActorInterface;
+class ITeleportableActor;
 class UBoxComponent;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
@@ -49,7 +49,7 @@ public:
 	bool IsPointCrossingPortal(FVector Point, FVector PortalLocation, FVector PortalNormal);
 
 	UFUNCTION(BlueprintCallable)
-	void TeleportActor(AActor* ActorToTeleport);
+	void TeleportActor(AActor* TargetToTeleport);
 
 	UFUNCTION(BlueprintCallable)
 	void SetLastInFront(bool IsInFront);
@@ -64,11 +64,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// TODO: Use overlap event to handle teleport actor
+	// virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	
 	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(BlueprintReadOnly)
 	USceneComponent* PortalRootComponent;
-
 private:
 	void GeneratePortalTexture();
 	void UpdateRenderTarget();
@@ -101,7 +103,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool bEnableCapture{false};
 
-	ITeleportPortalActorInterface* TeleportActorInterface;
+	ITeleportableActor* TeleportActorInterface;
 
 	UPROPERTY(EditAnywhere)
 	ATeleportPortal* LinkedPortal;

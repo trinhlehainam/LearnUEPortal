@@ -2,7 +2,7 @@
 
 
 #include "TeleportPortal.h"
-#include "TeleportPortalCharacterInterface.h"
+#include "ITeleportableActor.h"
 #include "UTool.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -98,7 +98,7 @@ void ATeleportPortal::BeginPlay()
 
 	if (TeleportableActor != nullptr)
 	{
-		if (ITeleportPortalActorInterface* Interface = Cast<ITeleportPortalActorInterface>(TeleportableActor);
+		if (ITeleportableActor* Interface = Cast<ITeleportableActor>(TeleportableActor);
 			Interface != nullptr)
 		{
 			TeleportActorInterface = Interface;
@@ -374,9 +374,9 @@ bool ATeleportPortal::IsPointCrossingPortal(const FVector Point, const FVector P
 	return IsIntersect;
 }
 
-void ATeleportPortal::TeleportActor(AActor* ActorToTeleport)
+void ATeleportPortal::TeleportActor(AActor* TargetToTeleport)
 {
-	if (LinkedPortal == nullptr || ActorToTeleport == nullptr)
+	if (LinkedPortal == nullptr || TargetToTeleport == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LinkedPortal or ActorToTeleport is null"));
 		return;
@@ -389,33 +389,33 @@ void ATeleportPortal::TeleportActor(AActor* ActorToTeleport)
 	// }
 
 	FVector SavedVelocity = FVector::ZeroVector;
-	SavedVelocity = ActorToTeleport->GetVelocity();
+	SavedVelocity = TargetToTeleport->GetVelocity();
 
 	// Apply new location/rotation for actor after
 	FHitResult HitResult;
 	FVector NewLocation = FUTool::ConvertLocationToActorSpace(
-		ActorToTeleport->GetActorLocation(),
+		TargetToTeleport->GetActorLocation(),
 		this,
 		LinkedPortal);
-	ActorToTeleport->SetActorLocation(NewLocation,
+	TargetToTeleport->SetActorLocation(NewLocation,
 		false,
 		&HitResult,
 		ETeleportType::TeleportPhysics);
 
 	FRotator NewRotation = FUTool::ConvertRotationToActorSpace(
-		ActorToTeleport->GetActorRotation(),
+		TargetToTeleport->GetActorRotation(),
 		this,
 		LinkedPortal
 	);
-	ActorToTeleport->SetActorRotation(NewRotation);
+	TargetToTeleport->SetActorRotation(NewRotation);
 
-	if (ITeleportPortalActorInterface* Interface = Cast<ITeleportPortalActorInterface>(ActorToTeleport);
+	if (ITeleportableActor* Interface = Cast<ITeleportableActor>(TargetToTeleport);
 		Interface != nullptr)
 	{
-		if (ACharacter* Character = Interface->Execute_GetCharacter(ActorToTeleport);
+		if (ACharacter* Character = Interface->Execute_GetCharacter(TargetToTeleport);
 			Character != nullptr)
 		{
-			if (APlayerController* PortalPlayerController = Interface->Execute_GetPlayerController(ActorToTeleport);
+			if (APlayerController* PortalPlayerController = Interface->Execute_GetPlayerController(TargetToTeleport);
 				PortalPlayerController != nullptr)
 			{
 				NewRotation = FUTool::ConvertRotationToActorSpace(

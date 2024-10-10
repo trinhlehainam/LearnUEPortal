@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "LearnPortal/Portal/TeleportPortalCharacterInterface.h"
+#include "LearnPortal/Portal/ITeleportableActor.h"
 #include "Logging/LogMacros.h"
 #include "LearnPortalCharacter.generated.h"
 
@@ -18,7 +18,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ALearnPortalCharacter : public ACharacter, public ITeleportPortalActorInterface
+class ALearnPortalCharacter : public ACharacter, public ITeleportableActor
 {
 	GENERATED_BODY()
 
