@@ -98,10 +98,9 @@ void ATeleportPortal::BeginPlay()
 
 	if (TeleportableActor != nullptr)
 	{
-		if (ITeleportableActor* Interface = Cast<ITeleportableActor>(TeleportableActor);
-			Interface != nullptr)
+		if (TeleportableActor->Implements<UTeleportableActor>())
 		{
-			TeleportActorInterface = Interface;
+			bHasTeleportActorInterface = true;
 		}
 		else
 		{
@@ -175,7 +174,7 @@ void ATeleportPortal::GeneratePortalTexture()
 
 void ATeleportPortal::UpdateRenderTarget()
 {
-	if (ControllerOwner == nullptr || TeleportActorInterface == nullptr || TeleportableActor == nullptr)
+	if (ControllerOwner == nullptr || !bHasTeleportActorInterface || TeleportableActor == nullptr)
 	{
 		return;
 	}
@@ -211,7 +210,7 @@ void ATeleportPortal::UpdateCapture()
 	}
 	
 	if (SceneCapture == nullptr || PortalTexture == nullptr 
-		|| TeleportActorInterface == nullptr || TeleportableActor == nullptr
+		|| !bHasTeleportActorInterface || TeleportableActor == nullptr
 		|| bIsActive == false)
 	{
 		return;
@@ -220,7 +219,7 @@ void ATeleportPortal::UpdateCapture()
 	// Place the SceneCapture to the linkedportal
 	if (ATeleportPortal* Target = GetLinkedPortal(); Target != nullptr)
 	{
-		const UCameraComponent* PlayerCamera = TeleportActorInterface->Execute_GetCameraComponent(TeleportableActor);
+		const UCameraComponent* PlayerCamera = ITeleportableActor::Execute_GetCameraComponent(TeleportableActor);
 		if (PlayerCamera == nullptr)
 		{
 			return;
@@ -247,12 +246,12 @@ void ATeleportPortal::UpdateCapture()
 
 void ATeleportPortal::UpdateTeleport()
 {
-	if (ControllerOwner == nullptr || TeleportActorInterface == nullptr || TeleportableActor == nullptr)
+	if (ControllerOwner == nullptr || !bHasTeleportActorInterface || TeleportableActor == nullptr)
 	{
 		return;
 	}
 
-	const UCameraComponent* PlayerCamera = TeleportActorInterface->Execute_GetCameraComponent(TeleportableActor);
+	const UCameraComponent* PlayerCamera = ITeleportableActor::Execute_GetCameraComponent(TeleportableActor);
 	if (PlayerCamera == nullptr)
 	{
 		return;
@@ -409,13 +408,12 @@ void ATeleportPortal::TeleportActor(AActor* TargetToTeleport)
 	);
 	TargetToTeleport->SetActorRotation(NewRotation);
 
-	if (ITeleportableActor* Interface = Cast<ITeleportableActor>(TargetToTeleport);
-		Interface != nullptr)
+	if (TargetToTeleport->Implements<UTeleportableActor>())
 	{
-		if (ACharacter* Character = Interface->Execute_GetCharacter(TargetToTeleport);
+		if (ACharacter* Character = ITeleportableActor::Execute_GetCharacter(TargetToTeleport);
 			Character != nullptr)
 		{
-			if (APlayerController* PortalPlayerController = Interface->Execute_GetPlayerController(TargetToTeleport);
+			if (APlayerController* PortalPlayerController = ITeleportableActor::Execute_GetPlayerController(TargetToTeleport);
 				PortalPlayerController != nullptr)
 			{
 				NewRotation = FUTool::ConvertRotationToActorSpace(

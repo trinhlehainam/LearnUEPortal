@@ -54,10 +54,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetLastInFront(bool IsInFront);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	UStaticMeshComponent* PortalMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	UBoxComponent* ActorDetectionBox;
 
 protected:
@@ -97,13 +97,13 @@ private:
 	UPROPERTY()
 	AActor* TeleportableActor;
 
+	bool bHasTeleportActorInterface{false};
+
 	bool bIsActive{false};
 	bool bLastInFront{false};
 	FVector LastPosition;
 	UPROPERTY(EditAnywhere)
 	bool bEnableCapture{false};
-
-	ITeleportableActor* TeleportActorInterface;
 
 	UPROPERTY(EditAnywhere)
 	ATeleportPortal* LinkedPortal;
